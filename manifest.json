@@ -2,7 +2,7 @@
   "name": "Taint Testing Tool",
   "version": "1.0.0",
   "manifest_version": 2,
-  "description": "Identifies DOMXSS and similar security issues using simple taint analysis of string values.\n'Injection' icon was made by 'smalllikeart' from www.flaticon.com and licensed as 'CC 3.0 BY' (http://creativecommons.org/licenses/by/3.0/).",
+  "description": "Identifies DOMXSS using simple taint analysis of string values. Icon by 'smalllikeart' from www.flaticon.com licensed as CC 3.0 BY.",
   "homepage_url": "https://github.com/ollseg/ttt-ext/",
   "icons": {
         "16": "images/injection16.png",
