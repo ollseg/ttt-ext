@@ -1,0 +1,44 @@
+{
+  "name": "Taint Testing Tool",
+  "version": "1.0.0",
+  "manifest_version": 2,
+  "description": "Identifies DOMXSS and similar security issues using simple taint analysis of string values.\n'Injection' icon was made by 'smalllikeart' from www.flaticon.com and licensed as 'CC 3.0 BY' (http://creativecommons.org/licenses/by/3.0/).",
+  "homepage_url": "https://github.com/ollseg/ttt-ext/",
+  "icons": {
+        "16": "images/injection16.png",
+        "32": "images/injection32.png",
+        "64": "images/injection64.png",
+        "64": "images/injection128.png",
+        "256": "images/injection256.png",
+        "512": "images/injection512.png"
+  },
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": false
+  },
+  "browser_action": {
+    "default_title": "Scan for keywords and reload page!"
+  },
+  "content_scripts": [{
+      "js": ["content.js"],
+      "run_at": "document_start",
+      "all_frames": true,
+      "matches": ["https://*/*", "http://*/*"]
+  }],
+  "background": {
+    "scripts": [
+      "background.js"
+    ],
+    "persistent": true
+  },
+  "permissions": [
+    "https://*/",
+    "http://*/",
+    "activeTab",
+    "webRequest",
+    "webRequestBlocking",
+    "webNavigation",
+    "notifications",
+    "storage"
+  ]
+}
