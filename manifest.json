@@ -1,6 +1,6 @@
 {
   "name": "Taint Testing Tool",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "manifest_version": 2,
   "description": "Identifies DOMXSS using simple taint analysis of string values. Icon by 'smalllikeart' from www.flaticon.com licensed as CC 3.0 BY.",
   "homepage_url": "https://github.com/ollseg/ttt-ext/",
@@ -32,8 +32,6 @@
     "persistent": true
   },
   "permissions": [
-    "https://*/",
-    "http://*/",
     "activeTab",
     "webRequest",
     "webRequestBlocking",
