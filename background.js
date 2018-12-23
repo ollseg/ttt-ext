@@ -21,6 +21,18 @@ chrome.browserAction.onClicked.addListener(function (tab) {
 //
 var warningCounter = 0;
 var warningsAtLAstNotification = 0;
+var muteNotifications = false;
+
+// Fetch our options and make sure to notice when they are changed
+chrome.storage.local.get(['muteNotifications'], function(result) {
+    muteNotifications = result['muteNotifications'];
+});
+chrome.storage.onChanged.addListener(function(changes, namespace) {
+    var change = changes['muteNotifications'];
+    if (change) {
+        muteNotifications = change['newValue'];
+    }
+});
 
 // listen to requests from content script
 chrome.runtime.onMessage.addListener( function(req, sender, sendResponse) {
@@ -43,7 +55,7 @@ chrome.webNavigation.onBeforeNavigate.addListener( function (details) {
 
 // show notifications if page has triggered warnings
 function showNotifications() {
-    if (warningsAtLAstNotification < warningCounter) {
+    if (!muteNotifications && warningsAtLAstNotification < warningCounter) {
         chrome.notifications.create("", { type: "basic",
                                           title: "Taint Testing Tool",
                                           message: "Page has triggered " + warningCounter + " warning" + (warningCounter > 1 ? "s" : "") + "!" +
