@@ -39,7 +39,7 @@ function addTaintHooks( thisWindow ) {
     //
 
     // report a warning to the content script
-    function addWarning(warningText) {
+    function addWarning(warningLabel, warningText) {
 
         // try to weed out false positives
         var match, regEx = /${taintString}/ig;
@@ -57,22 +57,25 @@ function addTaintHooks( thisWindow ) {
             if (post.includes(filterString)) continue;
 
             // if we find "special" characters that are not encoded, this is a good match
-            if (post.match(/['"<>]/)) continue;
+            if (post.match(/["<>]/)) continue;
+
+            // make sure that single quotes are actually in use before accepting them
+            if (post.includes("'") && warningText.match(/[:=] *\'/)) { console.log('GOOD'); continue;}
 
             // if this is a DOM match, it's probably a false positive?
-            if (warningText.slice(2,6).includes('DOM'))
+            if (warningLabel.includes('DOM'))
                 falseMatches++;
         }
         if (matches && matches == falseMatches) {
-            console.warn("FP? " + warningText.slice(warningText.lastIndexOf("%c")+2));
+            console.warn("FP? " + warningLabel + ": " +  warningText);
             return;
         }
 
         // print the warning to the console
-        console.warn(warningText, "color: Red", "color: Black");
+        console.warn("%c" + warningLabel + "%c: " + warningText, "color: Red", "color: Black");
 
         // tell content script that we found something
-        thisWindow.top.dispatchEvent(new CustomEvent('addWarning', { detail: warningText }));
+        thisWindow.top.dispatchEvent(new CustomEvent('addWarning', { detail: thisWindow.location.origin + " " + warningLabel + ": " +  warningText }));
     };
 
     // concatenate arguments to form a string
@@ -149,9 +152,9 @@ function addTaintHooks( thisWindow ) {
         console.log('Scanning script source for new keywords.');
 
         function extractKeywords(text) {
-            for (let regEx of [ ///indexOf\\(\\w*['"]([a-z0-9_-]{0,20}[a-z0-9])=?['"]/ig,
-                                ///location.{4,32}\\(\\w*['"]([a-z0-9_-]{0,20}[a-z0-9])=?['"]/ig
-                                /\\(\\w*['"]([a-z0-9_-]{0,20}[a-z0-9])=?['"]/ig
+            for (let regEx of [ ///indexOf\\(\\s*['"]([a-z0-9_-]{0,20}[a-z0-9])=?['"]/ig,
+                                ///location.{4,32}\\(\\s*['"]([a-z0-9_-]{0,20}[a-z0-9])=?['"]/ig
+                                /\\(\\s*['"]([a-z0-9_-]{0,20}[a-z0-9])=?['"]/ig
                               ])
             {
                 var match;
@@ -304,7 +307,7 @@ function addTaintHooks( thisWindow ) {
             if (taintRegex.test(url))
             {
                 var argString = argsToString(arguments);
-                addWarning("%cXHR.open:%c " + argString);
+                addWarning("XHR.open", argString);
 
                 // propagate taint to responseText / responseXML
                 this.addEventListener('readystatechange', function() {
@@ -341,7 +344,7 @@ function addTaintHooks( thisWindow ) {
             {
                 // don't warn on orphaned a.href (used for "URL parsing" by eg. Angular)
                 if (this.parentNode || this.tagName != "A" || arguments[0] != "href") {
-                    addWarning("%cDOM%c setAttribute " + name + "." + argString);
+                    addWarning("DOM setAttribute", name + "." + argString);
                 }
             }
 
@@ -359,14 +362,14 @@ function addTaintHooks( thisWindow ) {
         thisWindow.HTMLDocument.prototype.write = function () {
             var argString = argsToString(arguments);
             if (taintRegex.test(argString))
-                addWarning("%cDOMXSS%c document.write: " + argString);
+                addWarning("DOMXSS document.write", argString);
             return thisWindow.HTMLDocument.prototype.orgWrite.apply(this, arguments);
         }
         thisWindow.HTMLDocument.prototype.orgWriteln = thisWindow.HTMLDocument.prototype.writeln;
         thisWindow.HTMLDocument.prototype.writeln = function () {
             var argString = argsToString(arguments);
             if (taintRegex.test(argString))
-                addWarning("%cDOMXSS%c document.writeln: " + argString);
+                addWarning("DOMXSS document.writeln", argString);
             return thisWindow.HTMLDocument.prototype.orgWriteln.apply(this, arguments);
         }
     } catch (e) {
@@ -382,7 +385,7 @@ function addTaintHooks( thisWindow ) {
 
             var argString = argsToString(arguments);
             if (taintRegex.test(argString))
-                addWarning("%cDOMXSS%c setTimeout: " + argString);
+                addWarning("DOMXSS setTimeout", argString);
 
             return thisWindow.orgSetTimeout.apply( this, arguments );
         }
@@ -391,7 +394,7 @@ function addTaintHooks( thisWindow ) {
 
             var argString = argsToString(arguments);
             if (taintRegex.test(argString))
-                addWarning("%cDOMXSS%c setInterval: " + argString);
+                addWarning("DOMXSS setInterval", argString);
 
             return thisWindow.orgSetInterval.apply( this, arguments );
         }
@@ -448,7 +451,7 @@ function addTaintHooks( thisWindow ) {
 
             var argString = argsToString(arguments);
             if (taintRegex.test(argString)) {
-                addWarning("%cDOMXSS%c eval: " + argString);
+                addWarning("DOMXSS eval", argString);
             }
 
             // catch any execution errors in eval()
@@ -477,7 +480,7 @@ function addTaintHooks( thisWindow ) {
         var name = e.error ? e.error.filename : (e.filename ? e.filename : "unknown");
         var text = e.error ? e.error.message : e.message;
         if (name == 'eval()' || taintRegex.test(text)) {
-            addWarning("JavaScript %cError%c in " + name + ": " + text);
+            addWarning("JavaScript Error in " + name, text);
         }
     });
 
@@ -489,14 +492,14 @@ function addTaintHooks( thisWindow ) {
     thisWindow.postMessage = function () {
             var argString = argsToString(arguments);
             if (taintRegex.test(argString)) {
-                addWarning("%cTAINT%c postMessage: " + argString);
+                addWarning("Tainted postMessage call", argString);
             } else {
                 console.log( "postMessage: " + argString);
             }
     }
     thisWindow.addEventListener('message', function(msg) {
         if (taintRegex.test(msg.data)) {
-            addWarning("%cTAINT%c postMessage handler: " + msg.data);
+            addWarning("Tainted message event", msg.data);
         }
     });
 
@@ -510,7 +513,7 @@ function addTaintHooks( thisWindow ) {
             var argString = argsToString(arguments);
             if (taintRegex.test(argString)) {
                 var name = "[" + this.localName + (this.id ? "#" + this.id : "") + "]";
-                addWarning("%cDOMXSS%c " + name + ".innerHTML = " + argString);
+                addWarning("DOMXSS " + name + ".innerHTML", argString);
             }
             return originalInnerHTML.apply(this, arguments);
         });
@@ -518,7 +521,7 @@ function addTaintHooks( thisWindow ) {
             var argString = argsToString(arguments);
             if (taintRegex.test(argString)) {
                 var name = "[" + this.localName + (this.id ? "#" + this.id : "") + "]";
-                addWarning("%cDOMXSS%c " + name + ".outerHTML = " + argString);
+                addWarning("DOMXSS " + name + ".outerHTML", argString);
             }
             return originalOuterHTML.apply(this, arguments);
         });
@@ -547,7 +550,7 @@ function addTaintHooks( thisWindow ) {
                     }
                 }
                 if (taintRegex.test(text)) {
-                    addWarning("%cDOM%c child node added to '" + name + "': '" + text + "'");
+                    addWarning("DOM child node added to '" + name + "'", text );
                 }
 
             } else if (mutation.type == 'attributes'){
@@ -560,7 +563,7 @@ function addTaintHooks( thisWindow ) {
                     {
                         // ignore tainted links
                         if (mutation.target.tagName != "A" || mutation.attributeName != "href") {
-                            addWarning("%cDOM%c attribute '" + mutation.attributeName + "' was modified on '" + name + "' to '" + mutation.target.attributes[mutation.attributeName].nodeValue + "'");
+                            addWarning("DOM attribute '" + mutation.attributeName + "' was modified on '" + name + "'", mutation.target.attributes[mutation.attributeName].nodeValue);
                         }
                     }
                 } catch (e) {
@@ -570,7 +573,7 @@ function addTaintHooks( thisWindow ) {
             } else if (mutation.type == 'characterData'){
 
                 if (taintRegex.test(mutation.target.textContent)) {
-                    addWarning("%cDOM%c tainted characterData added to '" + name + "': '" + mutation.target.textContent + "'");
+                    addWarning("DOM tainted characterData added to '" + name + "'", mutation.target.textContent);
                 }
 
             } else {

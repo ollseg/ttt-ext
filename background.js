@@ -37,7 +37,7 @@ chrome.storage.onChanged.addListener(function(changes, namespace) {
 // listen to requests from content script
 chrome.runtime.onMessage.addListener( function(req, sender, sendResponse) {
     if (req.op == "addWarning") {
-        console.log(req.message, "color: Red", "color: Default");
+        console.log(req.message);
         warningCounter++;
         chrome.browserAction.setBadgeText({text: warningCounter.toString()});
     }
