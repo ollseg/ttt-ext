@@ -33,8 +33,6 @@
   },
   "permissions": [
     "activeTab",
-    "webRequest",
-    "webRequestBlocking",
     "webNavigation",
     "notifications",
     "storage"
