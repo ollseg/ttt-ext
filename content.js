@@ -48,7 +48,7 @@ function addTaintHooks( thisWindow ) {
             matches++;
 
             // look at string just boefore and after the match
-            var pre = match.input.slice(match.index-filterString.length, match.index);
+            var pre = match.input.slice(match.index-Math.min(match.index,filterString.length), match.index);
             var post = match.input.slice(match.index+match[0].length);
             post = post.slice(0, post.search(/[^a-z.0-9-]/i)+filterString.length);
             //console.log(pre + " : " + match[0] + " : " + post);
@@ -62,8 +62,8 @@ function addTaintHooks( thisWindow ) {
             // make sure that single quotes are actually in use before accepting them
             if (post.includes("'") && warningText.match(/[:=] *\'/)) { console.log('GOOD'); continue;}
 
-            // report all tainted src attributes
-            if (pre.includes("src=")) continue;
+            // report all tainted src and href attributes
+            if (pre.includes("src=") || pre.includes("href=")) continue;
 
             // if this is a DOM match, it's probably a false positive?
             if (warningLabel.includes('DOM'))
