@@ -160,13 +160,13 @@ function addTaintHooks( thisWindow ) {
         function extractKeywords(text) {
             for (let regEx of [ ///indexOf\\(\\s*['"]([a-z0-9_-]{0,20}[a-z0-9])=?['"]/ig,
                                 ///location.{4,32}\\(\\s*['"]([a-z0-9_-]{0,20}[a-z0-9])=?['"]/ig
-                                /\\(\\s*['"]([a-z0-9_-]{0,20}[a-z0-9])=?['"]/ig
+                                /(\\(|=)\\s*['"]([a-z0-9_-]{0,20}[a-z0-9])=?['"]/ig
                               ])
             {
                 var match;
                 while (match = regEx.exec(text)) {
-                    if (!discoveredKeywords.includes(match[1])) {
-                        discoveredKeywords.push(match[1]);
+                    if (!discoveredKeywords.includes(match[2])) {
+                        discoveredKeywords.push(match[2]);
                     }
                 }
             }
