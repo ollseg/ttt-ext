@@ -113,6 +113,9 @@ function addTaintHooks( thisWindow ) {
                 search += "&";
             search += taintString + ".param=" + taintString + ".value" + filterString;
         }
+        for (var word of discoveredKeywords) {
+            search += "&" + word + "=" + taintString + ".disco" + filterString;
+        }
         taintedUrl.search = search;
 
         // if old hash values exist, extract keywords
