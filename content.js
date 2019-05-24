@@ -226,7 +226,7 @@ function addTaintHooks( thisWindow ) {
     // taint the referrer (maybe this should be a valid URL to detect SSRF?)
     //
     Object.defineProperty(thisWindow.document, 'referrer', {
-        value: "https://" + taintString + ".example.com/"+ taintString + ".referrer?test=" + taintString + ".referrer" + filterString + "#" + taintString + ".referrer" + filterString,
+        value: "https://" + taintString + ".example.com/"+ taintString + filterString + ".referrer" + window.location.search + window.location.hash,
         writable: false
     });
 
