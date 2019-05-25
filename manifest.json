@@ -17,7 +17,7 @@
     "open_in_tab": false
   },
   "browser_action": {
-    "default_title": "Scan for keywords and reload page!"
+    "default_title": "Click me to inject taint!"
   },
   "content_scripts": [{
       "js": ["content.js"],
