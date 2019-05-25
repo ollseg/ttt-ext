@@ -60,7 +60,7 @@ function addTaintHooks( thisWindow ) {
             if (post.match(/["<>]/)) continue;
 
             // make sure that single quotes are actually in use before accepting them
-            if (post.includes("'") && warningText.match(/[:=] *\'/)) { console.log('GOOD'); continue;}
+            if (post.includes("'") && warningText.match(/[:=] *\'/)) continue;
 
             // report all tainted src and href attributes
             if (pre.includes("src=") || pre.includes("href=")) continue;
