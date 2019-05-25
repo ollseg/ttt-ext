@@ -78,7 +78,7 @@ function addTaintHooks( thisWindow ) {
         console.warn("%c" + warningLabel + "%c: " + warningText, "color: Red", "color: Black");
 
         // tell content script that we found something
-        thisWindow.dispatchEvent(new CustomEvent('addWarning', { detail: thisWindow.location.origin + " " + warningLabel + ": " +  warningText }));
+        thisWindow.parent.dispatchEvent(new CustomEvent('addWarning', { detail: thisWindow.location.origin + " " + warningLabel + ": " +  warningText }));
     };
 
     // concatenate arguments to form a string
