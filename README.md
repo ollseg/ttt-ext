@@ -9,7 +9,6 @@ Clicking the "browser action" icon scans the included script sources for keyword
 
 Options page contains a setting to automatically trigger the keyword search on every page load, which sometimes confuses single-page web apps.
 
-There is currently NO way to limit the scope of the extension, so please disable it when not in use.
-And, of course, please don't use it on sites where you don't have permission to test for security issues.
+There is currently NO way to limit the scope of the extension, so please disable it when not in use. In fact, limiting the scope will miss analysis of cross-origin iframes so using "On Click" or "On Specific Sites" is not advised. Please, just don't use this extension on sites where you don't have permission to test for security issues.
 
 The awesome icon was made by [smalllikeart](https://www.flaticon.com/authors/smalllikeart) from [www.flaticon.com](https://www.flaticon.com/) and is licensed [CC 3.0 BY](http://creativecommons.org/licenses/by/3.0/ "Creative Commons BY 3.0").
