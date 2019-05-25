@@ -78,7 +78,7 @@ function addTaintHooks( thisWindow ) {
         console.warn("%c" + warningLabel + "%c: " + warningText, "color: Red", "color: Black");
 
         // tell content script that we found something
-        thisWindow.top.dispatchEvent(new CustomEvent('addWarning', { detail: thisWindow.location.origin + " " + warningLabel + ": " +  warningText }));
+        thisWindow.dispatchEvent(new CustomEvent('addWarning', { detail: thisWindow.location.origin + " " + warningLabel + ": " +  warningText }));
     };
 
     // concatenate arguments to form a string
@@ -549,11 +549,6 @@ function addTaintHooks( thisWindow ) {
                 for (var i=0; i<mutation.addedNodes.length; i++){
                     var node =  mutation.addedNodes[i];
                     text += node.outerHTML;
-
-                    // discover new iframes and add our hooks to them
-                    if (node.contentWindow) {
-                        addTaintHooks(node.contentWindow);
-                    }
                 }
                 if (taintRegex.test(text)) {
                     addWarning("DOM child node added to '" + name + "'", text );
@@ -592,26 +587,6 @@ function addTaintHooks( thisWindow ) {
     observer.observe(thisWindow.document, { attributes: true, childList: true, characterData: true, subtree: true });
 
     //
-    // Inspect new elements added to the DOM
-    //
-    try {
-        thisWindow.HTMLElement.prototype.orgAppendChild = thisWindow.HTMLElement.prototype.appendChild;
-        thisWindow.HTMLElement.prototype.appendChild = function () {
-            var obj = thisWindow.HTMLElement.prototype.orgAppendChild.apply(this, arguments);
-
-            // add inspection hooks to new iframes as well
-            if (obj instanceof thisWindow.HTMLIFrameElement && obj.contentWindow) {
-                addTaintHooks(obj.contentWindow);
-            }
-
-            return obj;
-        }
-    } catch (e) {
-        console.error( "Couldn't hook HTMLElement.appendChild: " + e); 
-    }
-
-
-    //
     // Stuff related to navigation, only for top frame
     //
     if (thisWindow.top == thisWindow) {
@@ -641,6 +616,7 @@ function addTaintHooks( thisWindow ) {
         });
     }
 
+    console.log("Added hooks to " + thisWindow.origin);
 }
 addTaintHooks(window);
 

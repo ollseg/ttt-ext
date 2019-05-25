@@ -23,7 +23,8 @@
       "js": ["content.js"],
       "run_at": "document_start",
       "all_frames": true,
-      "matches": ["https://*/*", "http://*/*"]
+      "match_about_blank": true,
+      "matches": ["*://*/*"]
   }],
   "background": {
     "scripts": [
