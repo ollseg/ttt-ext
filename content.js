@@ -39,7 +39,7 @@ function addTaintHooks( thisWindow ) {
     //
 
     // report a warning to the content script
-    function addWarning(warningLabel, warningText) {
+    thisWindow.addWarning = function (warningLabel, warningText) {
 
         // try to weed out false positives
         var match, regEx = /${taintString}/ig;
@@ -47,8 +47,8 @@ function addTaintHooks( thisWindow ) {
         while (match = regEx.exec(warningText)) {
             matches++;
 
-            // look at string just boefore and after the match
-            var pre = match.input.slice(match.index-Math.min(match.index,filterString.length), match.index);
+            // look at string just before and after the match
+            var pre = match.input.slice(match.index-Math.min(match.index,'href = "https://'.length), match.index);
             var post = match.input.slice(match.index+match[0].length);
             post = post.slice(0, post.search(/[^a-z.0-9-]/i)+filterString.length);
             //console.log(pre + " : " + match[0] + " : " + post);
@@ -63,7 +63,7 @@ function addTaintHooks( thisWindow ) {
             if (post.includes("'") && warningText.match(/[:=] *\'/)) continue;
 
             // report all tainted src and href attributes
-            if (pre.includes("src=") || pre.includes("href=")) continue;
+            if (pre.match(/src\s?=/) || pre.match(/href\s?=/)) continue;
 
             // if this is a DOM match, it's probably a false positive?
             if (warningLabel.includes('DOM'))
@@ -93,7 +93,13 @@ function addTaintHooks( thisWindow ) {
     thisWindow.myDecodeURIComponent = thisWindow.decodeURIComponent;
     function addTaintToUrl(u) {
         var url = new URL(u);
-        var taintedUrl = new URL(url.origin + url.pathname);
+        var taintedUrl = new URL(url.origin);
+
+        // taint the pathname
+        if (thisWindow.location.href != "about:blank") {
+            taintedUrl.pathname = "//" + taintString + ".path";
+        }
+        taintedUrl.pathname += url.pathname;
 
         // decline navigation from /abc#123 to /123 
         if (thisWindow.location.hash.length > 2) {
@@ -105,7 +111,13 @@ function addTaintHooks( thisWindow ) {
         }
 
         // add the original parameters, if any
-        var search = thisWindow.myDecodeURIComponent(url.search);
+        var search = "";
+        try {
+            search = thisWindow.myDecodeURIComponent(url.search);
+        } catch (e) {
+            console.log("Couldn't decode search string '" + url.search + "': " + e);
+            search = url.search;
+        }
 
         // if no tainted parameters, add one
         if (!taintRegex.test(search)) {
@@ -116,7 +128,7 @@ function addTaintHooks( thisWindow ) {
         for (var word of discoveredKeywords) {
             search += "&" + word + "=" + taintString + ".disco" + filterString;
         }
-        taintedUrl.search = search;
+        taintedUrl.search = search + "&a=?&b";
 
         // if old hash values exist, extract keywords
         var hash = "";
@@ -252,6 +264,10 @@ function addTaintHooks( thisWindow ) {
         console.error( "Couldn't hook document.cookie: " + e); 
     }
 
+    //
+    // taint the location.pathname element
+    //
+    //thisWindow.history.replaceState(0,0,location.origin+"//"+taintString+".path"+location.pathname+(location.search===""?"?":location.search)+"&a=?&b"+location.hash);
 
     //
     // Inspect History changes
@@ -314,21 +330,6 @@ function addTaintHooks( thisWindow ) {
             {
                 var argString = argsToString(arguments);
                 addWarning("XHR.open", argString);
-
-                // propagate taint to responseText / responseXML
-                this.addEventListener('readystatechange', function() {
-                    if (this.readyState == 4) {
-                        var resp = this.responseText + "//<!-- " + taintString + ".XHR.responseText -->";
-                        Object.defineProperty(this, 'responseText', {
-                            value: resp,
-                            writable: false
-                        });
-                        Object.defineProperty(this, 'responseXML', {
-                            value: resp,
-                            writable: false
-                        });
-                    }
-                }, useCapture = true);
             }
 
             return this.orgOpen.apply( this, arguments );

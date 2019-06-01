@@ -32,6 +32,9 @@
     ],
     "persistent": true
   },
+  "web_accessible_resources": [
+    "/oops.js"
+  ],
   "permissions": [
     "activeTab",
     "webNavigation",

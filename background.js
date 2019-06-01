@@ -93,9 +93,22 @@ chrome.webRequest.onBeforeSendHeaders.addListener( function(details) {
 chrome.webRequest.onBeforeRequest.addListener( function(details) {
     var url = new URL(details.url);
 
-    // cancel fetch of tainted paths
-    if (url.pathname.indexOf(taintString) != -1) {
-        //console.log("Cancel " + details.url);
+    // intercept tainted origins
+    var caseInsensitive = new RegExp(taintString, "i");
+    if (url.hostname.match(caseInsensitive)) {
+        console.log("Redirecting " + url + " => " + chrome.runtime.getURL("/oops.js"));
+        return {redirectUrl: chrome.runtime.getURL("/oops.js")};
+    }
+
+    // attempt to clean tainted paths
+    var pathIndex = url.pathname.indexOf(taintString+".path");
+    if (pathIndex < 3 && pathIndex > -1) {
+        // clean the tainted path
+        url.pathname = url.pathname.substring(pathIndex+taintString.length+5);
+    }
+    if (pathIndex > 2) {
+        // can't clean, cancel navigation
+        console.log("Cancelled navigation to " + details.url);
         return { cancel: true };
     }
 
